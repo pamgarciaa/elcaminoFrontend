@@ -10,6 +10,14 @@ const LoginPage = React.lazy(() => import("../features/auth/pages/LoginPage"));
 const RegisterPage = React.lazy(
   () => import("../features/auth/pages/RegisterPage")
 );
+// 📌 NUEVAS PÁGINAS LAZY LOAD
+const ForgotPasswordPage = React.lazy(
+  () => import("../features/auth/pages/ForgotPasswordPage")
+);
+const ResetPasswordPage = React.lazy(
+  () => import("../features/auth/pages/ResetPasswordPage")
+);
+
 const ProductsPage = React.lazy(
   () => import("../features/shop/products/pages/ProductsPage")
 );
@@ -84,6 +92,10 @@ const AppRouter = () => {
           <Route path="blog/:id" element={<BlogDetailPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+
+          {/* 📌 NUEVAS RUTAS DE RECUPERACIÓN */}
+          <Route path="forgotpassword" element={<ForgotPasswordPage />} />
+          <Route path="resetpassword" element={<ResetPasswordPage />} />
 
           {/* 📌 RUTAS PRIVADAS */}
           <Route

@@ -43,6 +43,7 @@ const ProfileUpdatePage = () => {
       lastName: "",
       address: "",
       phone: "",
+      password: "", // Inicializamos vacío
     },
   });
 
@@ -54,12 +55,14 @@ const ProfileUpdatePage = () => {
         lastName: user.lastName ?? "",
         address: user.address ?? "",
         phone: user.phone ?? "",
+        password: "", // Resetamos password a vacío siempre
       });
 
       const initialUrl = getUserProfileUrl(user.profilePicture);
       if (initialUrl) setPreviewUrl(initialUrl);
     }
   }, [user, reset]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     setFile(selectedFile);
@@ -73,6 +76,11 @@ const ProfileUpdatePage = () => {
   };
 
   const onSubmit = (data: ProfileFields) => {
+    // Si el campo password está vacío, lo eliminamos para no enviar string vacío al backend
+    if (!data.password || data.password.trim() === "") {
+      delete data.password;
+    }
+
     mutate(
       { data, file },
       {
@@ -86,14 +94,14 @@ const ProfileUpdatePage = () => {
   if (loading) return <Loader message="Cargando perfil..." />;
 
   return (
-    <Container component="main" maxWidth="md" sx={{ mt: 4 }}>
+    <Container component="main" maxWidth="md" sx={{ mt: 4, mb: 8 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography
           component="h1"
           variant="h4"
-          sx={{ mb: 3, fontWeight: "bold" }}
+          sx={{ mb: 3, fontWeight: "bold", color: LOGO_COLOR }}
         >
-          👤 Editar Perfil
+          Editar Perfil
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -111,7 +119,7 @@ const ProfileUpdatePage = () => {
               <Avatar
                 src={previewUrl || undefined}
                 alt={user?.username}
-                sx={{ width: 100, height: 100, mb: 2 }}
+                sx={{ width: 100, height: 100, mb: 2, bgcolor: PRIMARY_ACCENT }}
               />
               <Input
                 type="file"
@@ -122,7 +130,20 @@ const ProfileUpdatePage = () => {
               />
             </Grid>
 
-            {/* CAMPOS DE TEXTO */}
+            {/* SECCIÓN DATOS DE CUENTA */}
+            <Grid size={{ xs: 12 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: PRIMARY_ACCENT,
+                  mt: 1,
+                  borderBottom: `1px solid ${PRIMARY_ACCENT}`,
+                }}
+              >
+                Datos de Cuenta
+              </Typography>
+            </Grid>
+
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
@@ -140,6 +161,37 @@ const ProfileUpdatePage = () => {
                 value={user?.email || ""}
                 disabled
               />
+            </Grid>
+
+            {/* CAMPO DE NUEVA CONTRASEÑA */}
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                type="password"
+                label="Nueva Contraseña (Opcional)"
+                placeholder="Escribe solo si deseas cambiarla"
+                {...register("password")}
+                error={!!errors.password}
+                helperText={
+                  errors.password?.message ||
+                  "Deja en blanco para mantener la actual."
+                }
+                autoComplete="new-password"
+              />
+            </Grid>
+
+            {/* SECCIÓN DATOS PERSONALES */}
+            <Grid size={{ xs: 12 }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: PRIMARY_ACCENT,
+                  mt: 2,
+                  borderBottom: `1px solid ${PRIMARY_ACCENT}`,
+                }}
+              >
+                Información Personal
+              </Typography>
             </Grid>
 
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -189,7 +241,7 @@ const ProfileUpdatePage = () => {
             variant="contained"
             disabled={isPending}
             sx={{
-              mt: 3,
+              mt: 4,
               py: 1.5,
               backgroundColor: PRIMARY_ACCENT,
               "&:hover": { backgroundColor: LOGO_COLOR },

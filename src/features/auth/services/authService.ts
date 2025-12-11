@@ -4,6 +4,8 @@ import {
   type RegisterFields,
   type LoginFormFields,
   type ProfileFields,
+  type ForgotPasswordFields,
+  type ResetPasswordFields,
 } from "../validators/authSchema";
 
 // --- LOGIN ---
@@ -18,7 +20,6 @@ export const registerUserService = async (
   file: File | null
 ) => {
   const formData = new FormData();
-  // ... (tu lógica de append existente) ...
   formData.append("username", data.username);
   formData.append("name", data.name);
   formData.append("lastName", data.lastName);
@@ -57,5 +58,26 @@ export const updateProfileService = async (
 // --- OBTENER PERFIL (ME) ---
 export const getMyProfileService = async () => {
   const response = await client.get(`${API_ROUTES.USERS}/profile`);
+  return response.data;
+};
+
+// --- NUEVO: OLVIDÉ MI CONTRASEÑA ---
+export const forgotPasswordService = async (data: ForgotPasswordFields) => {
+  // Asegúrate que esta ruta coincida con tu backend (/forgot-password)
+  const response = await client.post(
+    `${API_ROUTES.USERS}/forgotpassword`,
+    data
+  );
+  return response.data;
+};
+
+// --- NUEVO: RESTABLECER CONTRASEÑA ---
+export const resetPasswordService = async (data: ResetPasswordFields) => {
+  // Asegúrate que esta ruta coincida con tu backend (/reset-password)
+  const response = await client.post(`${API_ROUTES.USERS}/resetpassword`, {
+    email: data.email,
+    pin: data.pin,
+    password: data.password,
+  });
   return response.data;
 };

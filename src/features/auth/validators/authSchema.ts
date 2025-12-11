@@ -29,7 +29,7 @@ export const registerSchema = z.object({
 });
 export type RegisterFields = z.infer<typeof registerSchema>;
 
-// --- ESQUEMA DE EDICIÓN DE PERFIL ---
+// --- ESQUEMA DE EDICIÓN DE PERFIL (MODIFICADO) ---
 export const profileSchema = z.object({
   username: z
     .string()
@@ -48,7 +48,42 @@ export const profileSchema = z.object({
     .or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
+
+  // Nuevo campo opcional para cambiar contraseña
+  password: z
+    .string()
+    .min(6, "La nueva contraseña debe tener al menos 6 caracteres")
+    .optional()
+    .or(z.literal("")),
+
   profilePicture: z.any().optional(),
 });
 
 export type ProfileFields = z.infer<typeof profileSchema>;
+
+// --- NUEVO: OLVIDÉ CONTRASEÑA ---
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email("Formato de email no válido")
+    .min(1, "El email es obligatorio"),
+});
+
+export type ForgotPasswordFields = z.infer<typeof forgotPasswordSchema>;
+
+// --- NUEVO: RESETEAR CONTRASEÑA ---
+export const resetPasswordSchema = z
+  .object({
+    email: z.string().email("Email inválido"),
+    pin: z.string().min(4, "El PIN debe tener al menos 4 caracteres"),
+    password: z
+      .string()
+      .min(6, "La nueva contraseña debe tener al menos 6 caracteres"),
+    confirmPassword: z.string().min(6, "Confirma la contraseña"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordFields = z.infer<typeof resetPasswordSchema>;

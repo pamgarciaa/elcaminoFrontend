@@ -7,10 +7,11 @@ import {
   Box,
   Paper,
   Alert,
+  Link, // Importante importar Link de @mui/material
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom"; // Importante importar RouterLink
 import { useSnackbar } from "notistack";
 
 // Contexto y Validadores
@@ -19,6 +20,7 @@ import { loginSchema, type LoginFormFields } from "../validators/authSchema";
 
 // Servicios
 import { loginUserService } from "../services/authService";
+import { LOGO_COLOR, PRIMARY_ACCENT } from "../../../config/constants";
 
 const LoginPage = () => {
   const [error, setError] = useState("");
@@ -73,7 +75,7 @@ const LoginPage = () => {
         <Typography
           component="h1"
           variant="h5"
-          sx={{ mb: 2, fontWeight: "bold" }}
+          sx={{ mb: 2, fontWeight: "bold", color: LOGO_COLOR }}
         >
           Iniciar Sesión
         </Typography>
@@ -118,23 +120,56 @@ const LoginPage = () => {
             {...register("password")}
             error={!!errors.password}
             helperText={errors.password?.message}
-            sx={{ mb: 3 }}
+            sx={{ mb: 1 }}
           />
+
+          {/* ENLACE DE RECUPERACIÓN (NUEVO) */}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+            <Link
+              component={RouterLink}
+              to="/forgotpassword"
+              variant="body2"
+              sx={{
+                color: PRIMARY_ACCENT,
+                textDecoration: "none",
+                fontWeight: "bold",
+                "&:hover": { color: LOGO_COLOR },
+              }}
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </Box>
 
           <Button
             type="submit"
             fullWidth
             variant="contained"
             disabled={isSubmitting}
-            sx={{ mt: 3, mb: 2 }}
+            sx={{
+              mt: 1,
+              mb: 2,
+              bgcolor: PRIMARY_ACCENT,
+              "&:hover": { bgcolor: LOGO_COLOR },
+            }}
           >
             {isSubmitting ? "Cargando..." : "Entrar"}
           </Button>
 
-          {/* Enlaces de registro/olvido de contraseña */}
+          {/* Enlaces de registro */}
           <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
             <Typography variant="body2" color="text.secondary">
-              ¿No tienes cuenta? Regístrate aquí.
+              ¿No tienes cuenta?{" "}
+              <Link
+                component={RouterLink}
+                to="/register"
+                sx={{
+                  color: LOGO_COLOR,
+                  fontWeight: "bold",
+                  textDecoration: "none",
+                }}
+              >
+                Regístrate aquí.
+              </Link>
             </Typography>
           </Box>
         </Box>
