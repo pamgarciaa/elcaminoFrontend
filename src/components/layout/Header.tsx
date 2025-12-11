@@ -10,37 +10,39 @@ import {
   Container,
   Avatar,
   Drawer,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
 } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { useAuth } from "../../context/AuthContext";
-import { IMAGE_URL } from "../../api/axios.client";
-import { useCartCount, useCartQuery } from "../../hooks/useCartQuery";
-import { useRemoveItemMutation } from "../../hooks/useCartMutations";
-import type { CartItem } from "../../types";
+
+import { useAuth } from "../../features/auth/context/AuthContext";
+import { IMAGE_URL, LOGO_COLOR, PRIMARY_ACCENT } from "../../config/constants";
 import {
-  LOGO_COLOR,
-  PRIMARY_ACCENT,
-  DARK_TEXT_COLOR,
-} from "../../config/constants";
+  useCartQuery,
+  useCartCount,
+} from "../../features/shop/cart/hooks/useCartQuery";
+import {
+  useRemoveItemMutation,
+  useUpdateCartMutation,
+} from "../../features/shop/cart/hooks/useCartMutations";
+import type { CartItem } from "../../features/shop/cart/types/cartTypes";
+
+// IMPORTAMOS EL NUEVO COMPONENTE
+import CartDrawerContent from "../../features/shop/cart/components/CartDrawerContent";
 
 const LOGO_TEXT = "Mi pagina";
 
 const Header = () => {
   const { isAuthenticated, logout, user } = useAuth();
   const navigate = useNavigate();
-
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Hooks del carrito
-  const { count: cartCount, isLoading: isCartCountLoading } = useCartCount();
+  // Lógica del carrito
+  const { count: cartCount } = useCartCount();
   const { data: cart, isLoading: isCartLoading } = useCartQuery();
-  const { mutate: removeItemMutate } = useRemoveItemMutation();
+  const { mutate: removeItemMutate, isPending: isDeleting } =
+    useRemoveItemMutation();
+  const { mutate: updateCartMutate, isPending: isUpdating } =
+    useUpdateCartMutation();
 
   const handleLogout = () => {
     logout();
@@ -59,16 +61,21 @@ const Header = () => {
       setIsDrawerOpen(open);
     };
 
-  const handleRemoveItem = (productId: string) => {
-    removeItemMutate(productId);
+  // Handlers para el drawer
+  const handleRemoveItem = (productId: string) => removeItemMutate(productId);
+  const handleIncrement = (productId: string) =>
+    updateCartMutate({ productId, quantity: 1 });
+  const handleDecrement = (productId: string, currentQuantity: number) => {
+    if (currentQuantity === 1) {
+      if (window.confirm("¿Eliminar del carrito?")) removeItemMutate(productId);
+    } else {
+      updateCartMutate({ productId, quantity: -1 });
+    }
   };
 
-  // Cálculo del subtotal (solo items válidos)
   const validItems = useMemo(() => {
     if (!cart?.items) return [];
-    return cart.items.filter(
-      (item) => item.product !== null && item.product !== undefined
-    );
+    return cart.items.filter((item) => item.product != null);
   }, [cart]);
 
   const subtotal = useMemo(() => {
@@ -82,128 +89,11 @@ const Header = () => {
     picturePath: string | undefined
   ): string | undefined => {
     if (!picturePath) return undefined;
-    if (picturePath.startsWith("http")) {
-      return picturePath;
-    }
+    if (picturePath.startsWith("http")) return picturePath;
     return `${IMAGE_URL}/uploads/users/${picturePath}`;
   };
 
   const profileImageUrl = getProfileImageUrl(user?.profilePicture);
-
-  // --- COMPONENTE DEL DRAWER (MINI CARRO) ---
-  const cartDrawer = (
-    <Box sx={{ width: 350 }} role="presentation">
-      <Box
-        sx={{
-          p: 2,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography variant="h6" sx={{ fontWeight: "bold", color: LOGO_COLOR }}>
-          Tu Carrito ({cartCount || 0})
-        </Typography>
-        <Button onClick={toggleDrawer(false)}>Cerrar</Button>
-      </Box>
-      <Divider />
-
-      {isCartLoading && (
-        <Box sx={{ p: 2 }}>
-          <Typography>Cargando carrito...</Typography>
-        </Box>
-      )}
-
-      {(!validItems || validItems.length === 0) && !isCartLoading && (
-        <Box sx={{ p: 2, textAlign: "center" }}>
-          <Typography variant="body1">El carrito está vacío.</Typography>
-        </Box>
-      )}
-
-      {validItems.length > 0 && (
-        <List dense>
-          {validItems.map((item) => (
-            <ListItem
-              key={item._id}
-              sx={{
-                pr: 8,
-                position: "relative",
-              }}
-            >
-              <Box
-                component="img"
-                src={`${IMAGE_URL}/uploads/products/${item.product.image}`}
-                alt={item.product.name}
-                sx={{
-                  width: 50,
-                  height: 50,
-                  objectFit: "cover",
-                  mr: 2,
-                  borderRadius: 1,
-                }}
-              />
-              <ListItemText
-                primary={item.product.name}
-                secondary={`$${item.product.price.toFixed(2)} x ${
-                  item.quantity
-                }`}
-                primaryTypographyProps={{
-                  sx: { fontWeight: "bold", color: DARK_TEXT_COLOR },
-                }}
-                secondaryTypographyProps={{ sx: { color: PRIMARY_ACCENT } }}
-              />
-
-              <IconButton
-                edge="end"
-                aria-label="delete"
-                onClick={() => handleRemoveItem(item.product._id)}
-                size="small"
-                sx={{
-                  position: "absolute",
-                  right: 5,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                }}
-              >
-                <DeleteIcon fontSize="inherit" />
-              </IconButton>
-            </ListItem>
-          ))}
-        </List>
-      )}
-
-      <Divider />
-
-      {validItems.length > 0 && (
-        <Box sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Subtotal:{" "}
-            <Box
-              component="span"
-              sx={{ color: PRIMARY_ACCENT, fontWeight: "bold" }}
-            >
-              ${subtotal.toFixed(2)}
-            </Box>
-          </Typography>
-          <Button
-            component={RouterLink}
-            to="/cart"
-            variant="contained"
-            fullWidth
-            onClick={toggleDrawer(false)}
-            sx={{
-              mt: 1,
-              backgroundColor: LOGO_COLOR,
-              "&:hover": { backgroundColor: PRIMARY_ACCENT },
-            }}
-          >
-            Ver Carrito Completo
-          </Button>
-        </Box>
-      )}
-    </Box>
-  );
-  // --- FIN DEL COMPONENTE DEL DRAWER ---
 
   return (
     <AppBar
@@ -214,7 +104,7 @@ const Header = () => {
     >
       <Container maxWidth="lg">
         <Toolbar disableGutters>
-          {/* PARTE IZQUIERDA: LOGO/NOMBRE DE LA PÁGINA */}
+          {/* LOGO */}
           <Typography
             variant="h5"
             component={RouterLink}
@@ -231,31 +121,29 @@ const Header = () => {
             {LOGO_TEXT}
           </Typography>
 
-          {/* PARTE DERECHA: ENLACES Y ACCIONES */}
+          {/* MENU */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* ENLACES DE NAVEGACIÓN PÚBLICOS */}
             <Button component={RouterLink} to="/" color="inherit">
               Home
             </Button>
             <Button component={RouterLink} to="/blog" color="inherit">
               Blog
             </Button>
-
-            {/* ⬅️ CAMBIO: Apunta a /tienda ⬅️ */}
             <Button component={RouterLink} to="/tienda" color="inherit">
               Tienda
             </Button>
-
+            <Button component={RouterLink} to="/kits" color="inherit">
+              Kits
+            </Button>
             <Button component={RouterLink} to="/contacto" color="inherit">
               Contacto
             </Button>
 
             {isAuthenticated ? (
-              /* BLOQUE DE USUARIO AUTENTICADO */
               <Box
                 sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}
               >
-                {/* 1. AVATAR Y NOMBRE DEL USUARIO */}
+                {/* Perfil */}
                 <Box
                   component={RouterLink}
                   to="/profile"
@@ -272,7 +160,7 @@ const Header = () => {
                 >
                   <Avatar
                     src={profileImageUrl}
-                    alt={user?.name || "Perfil"}
+                    alt={user?.name}
                     sx={{ width: 30, height: 30 }}
                   >
                     {user?.name ? user.name[0] : "U"}
@@ -282,12 +170,10 @@ const Header = () => {
                   </Typography>
                 </Box>
 
-                {/* 2. ICONO DEL CARRITO */}
+                {/* Icono Carrito */}
                 <IconButton
                   onClick={toggleDrawer(true)}
                   sx={{ color: PRIMARY_ACCENT }}
-                  aria-label={`Carrito: ${cartCount} items`}
-                  disabled={isCartCountLoading}
                 >
                   <Badge
                     badgeContent={cartCount}
@@ -298,7 +184,7 @@ const Header = () => {
                   </Badge>
                 </IconButton>
 
-                {/* 3. BOTÓN SALIR */}
+                {/* Botón Salir */}
                 <Button
                   onClick={handleLogout}
                   variant="outlined"
@@ -317,7 +203,6 @@ const Header = () => {
                 </Button>
               </Box>
             ) : (
-              /* BLOQUE DE USUARIO NO AUTENTICADO */
               <Box
                 sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1 }}
               >
@@ -329,7 +214,6 @@ const Header = () => {
                 >
                   Iniciar Sesión
                 </Button>
-
                 <Button
                   component={RouterLink}
                   to="/register"
@@ -348,13 +232,23 @@ const Header = () => {
         </Toolbar>
       </Container>
 
-      {/* COMPONENTE DRAWER */}
+      {/* DRAWER IMPLEMENTADO CON EL COMPONENTE NUEVO */}
       <Drawer
         anchor={"right"}
         open={isDrawerOpen}
         onClose={toggleDrawer(false)}
       >
-        {cartDrawer}
+        <CartDrawerContent
+          isLoading={isCartLoading}
+          validItems={validItems}
+          cartCount={cartCount}
+          subtotal={subtotal}
+          onClose={() => setIsDrawerOpen(false)}
+          onRemove={handleRemoveItem}
+          onIncrement={handleIncrement}
+          onDecrement={handleDecrement}
+          isProcessing={isDeleting || isUpdating}
+        />
       </Drawer>
     </AppBar>
   );

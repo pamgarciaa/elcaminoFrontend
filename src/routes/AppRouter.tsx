@@ -1,25 +1,49 @@
-// src/routes/AppRouter.tsx
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "../components/layout/Layout";
-import LoginPage from "../features/auth/LoginPage";
-import RegisterPage from "../features/auth/RegisterPage";
-import ProductsPage from "../features/shop/ProductsPage";
-import BlogPage from "../features/blog/BlogPage";
-import CreateBlogPage from "../features/blog/CreateBlogPage";
-import EditBlogPage from "../features/blog/EditBlogPage";
-import HomePage from "../features/home/HomePage";
-import OrdersPage from "../features/orders/OrdersPage";
-import CreateProductPage from "../features/orders/CreateProductPage";
-import ProfilePage from "../features/auth/ProfilePage"; // Página de Visualización
-import ProfileUpdatePage from "../features/auth/ProfileUpdatePage"; // Página de Edición (renombrada)
-import BlogDetailPage from "../features/blog/BlogDetailPage";
-import ContactPage from "../features/contact/ContactPage";
-import KitsPage from "../features/kits/KitsPage";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../features/auth/context/AuthContext";
 import { USER_ROLES } from "../config/constants";
+import Loader from "../components/common/Loader";
 
-// Componente para proteger rutas privadas y verificar roles
+// --- LAZY LOADING DE PÁGINAS ---
+const LoginPage = React.lazy(() => import("../features/auth/pages/LoginPage"));
+const RegisterPage = React.lazy(
+  () => import("../features/auth/pages/RegisterPage")
+);
+const ProductsPage = React.lazy(
+  () => import("../features/shop/products/pages/ProductsPage")
+);
+const BlogPage = React.lazy(() => import("../features/blog/pages/BlogPage"));
+const CreateBlogPage = React.lazy(
+  () => import("../features/blog/pages/CreateBlogPage")
+);
+const EditBlogPage = React.lazy(
+  () => import("../features/blog/pages/EditBlogPage")
+);
+const HomePage = React.lazy(() => import("../features/home/HomePage"));
+const OrdersPage = React.lazy(
+  () => import("../features/shop/orders/pages/OrdersPage")
+);
+const CreateProductPage = React.lazy(
+  () => import("../features/shop/products/pages/CreateProductPage")
+);
+const ProfilePage = React.lazy(
+  () => import("../features/auth/pages/ProfilePage")
+);
+const ProfileUpdatePage = React.lazy(
+  () => import("../features/auth/pages/ProfileUpdatePage")
+);
+const BlogDetailPage = React.lazy(
+  () => import("../features/blog/pages/BlogDetailPage")
+);
+const CartPage = React.lazy(
+  () => import("../features/shop/cart/pages/CartPage")
+);
+const ContactPage = React.lazy(() => import("../features/contact/ContactPage"));
+const KitsPage = React.lazy(
+  () => import("../features/shop/kits/pages/KitsPage")
+);
+
 const ProtectedRoute = ({
   children,
   requiredRoles,
@@ -29,7 +53,7 @@ const ProtectedRoute = ({
 }) => {
   const { isAuthenticated, loading, user } = useAuth();
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <Loader message="Verificando sesión..." />;
   if (!isAuthenticated) return <Navigate to="/login" />;
 
   if (requiredRoles && !requiredRoles.includes(user?.role || USER_ROLES.USER)) {
@@ -47,90 +71,95 @@ const ProtectedRoute = ({
 
 const AppRouter = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
-        {/* 📌 RUTAS PÚBLICAS */}
-        <Route index element={<HomePage />} />
-        <Route path="contacto" element={<ContactPage />} />
-        <Route path="tienda" element={<ProductsPage />} />
-        <Route path="kits" element={<KitsPage />} />
-        <Route path="blog" element={<BlogPage />} />
-        <Route path="blog/:id" element={<BlogDetailPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
-        {/* TODO: Agregar ruta Contacto */}
+    // Envolvemos todo en Suspense para mostrar el Loader mientras se descargan los trozos de código
+    <Suspense fallback={<Loader message="Cargando página..." />}>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          {/* 📌 RUTAS PÚBLICAS */}
+          <Route index element={<HomePage />} />
+          <Route path="contacto" element={<ContactPage />} />
+          <Route path="tienda" element={<ProductsPage />} />
+          <Route path="kits" element={<KitsPage />} />
+          <Route path="blog" element={<BlogPage />} />
+          <Route path="blog/:id" element={<BlogDetailPage />} />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="register" element={<RegisterPage />} />
 
-        {/* 📌 RUTAS PRIVADAS */}
-        <Route
-          path="blog/edit/:id"
-          element={
-            <ProtectedRoute
-              requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.MODERATOR]}
-            >
-              <EditBlogPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Rutas de Usuario (Requiere solo Login) */}
-        <Route
-          path="orders"
-          element={
-            <ProtectedRoute>
-              <OrdersPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* RUTAS DE PERFIL */}
-        <Route path="profile">
-          {/* /profile muestra la página de visualización */}
+          {/* 📌 RUTAS PRIVADAS */}
           <Route
-            index
+            path="blog/edit/:id"
+            element={
+              <ProtectedRoute
+                requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.MODERATOR]}
+              >
+                <EditBlogPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Rutas de Usuario */}
+          <Route
+            path="orders"
             element={
               <ProtectedRoute>
-                <ProfilePage />
+                <OrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="cart"
+            element={
+              <ProtectedRoute>
+                <CartPage />
               </ProtectedRoute>
             }
           />
 
-          {/* /profile/edit muestra el formulario de edición */}
+          {/* RUTAS DE PERFIL */}
+          <Route path="profile">
+            <Route
+              index
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="edit"
+              element={
+                <ProtectedRoute>
+                  <ProfileUpdatePage />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          {/* Rutas de Moderación/Admin */}
           <Route
-            path="edit"
+            path="blog/new"
             element={
-              <ProtectedRoute>
-                <ProfileUpdatePage />
+              <ProtectedRoute
+                requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.MODERATOR]}
+              >
+                <CreateBlogPage />
               </ProtectedRoute>
             }
           />
+          <Route
+            path="products/new"
+            element={
+              <ProtectedRoute
+                requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.MODERATOR]}
+              >
+                <CreateProductPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-
-        {/* Rutas de Moderación/Admin */}
-        <Route
-          path="blog/new"
-          element={
-            <ProtectedRoute
-              requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.MODERATOR]}
-            >
-              <CreateBlogPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* ⬅️ NUEVA RUTA PARA CREAR PRODUCTO ⬅️ */}
-        <Route
-          path="products/new"
-          element={
-            <ProtectedRoute
-              requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.MODERATOR]}
-            >
-              <CreateProductPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="*" element={<Navigate to="/" replace />} />
-        <Route path="contacto" element={<ContactPage />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 };
 

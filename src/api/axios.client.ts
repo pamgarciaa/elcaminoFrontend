@@ -1,11 +1,22 @@
-import axios from 'axios';
-
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-export const IMAGE_URL = import.meta.env.VITE_IMAGE_URL || 'http://localhost:3000';
+import axios from "axios";
+import { API_BASE_URL } from "../config/constants";
 
 const client = axios.create({
-  baseURL,
+  baseURL: API_BASE_URL,
   withCredentials: true,
 });
+
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response?.status === 401 &&
+      !window.location.pathname.includes("/login")
+    ) {
+      window.dispatchEvent(new Event("auth:unauthorized"));
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default client;

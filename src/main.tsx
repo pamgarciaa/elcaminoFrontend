@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SnackbarProvider } from "notistack";
 import App from "./App";
 import { theme } from "./theme/theme";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./features/auth/context/AuthContext";
 
 const queryClient = new QueryClient();
 

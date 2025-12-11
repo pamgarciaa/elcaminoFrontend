@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import PhoneIcon from "@mui/icons-material/Phone";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import EmailIcon from "@mui/icons-material/Email"; // ⬅️ Nuevo Icono
+import EmailIcon from "@mui/icons-material/Email";
 import {
   LOGO_COLOR,
   PRIMARY_ACCENT,

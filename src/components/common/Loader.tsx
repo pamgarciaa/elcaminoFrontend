@@ -1,6 +1,4 @@
-// src/components/common/Loader.tsx
 import { Box, CircularProgress, Typography } from "@mui/material";
-import React from "react";
 
 const Loader = ({ message = "Cargando datos..." }) => {
   return (

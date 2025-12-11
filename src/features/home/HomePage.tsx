@@ -28,7 +28,7 @@ const HomePage = () => {
           sx={{
             fontWeight: 900,
             mb: 2,
-            textShadow: "2px 2px 8px rgba(0,0,0,0.8)", // Aumenté la sombra para mejor lectura
+            textShadow: "2px 2px 8px rgba(0,0,0,0.8)",
             fontStyle: "italic",
             letterSpacing: 2,
           }}

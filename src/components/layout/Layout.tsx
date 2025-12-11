@@ -13,7 +13,7 @@ const Layout = () => {
         <Outlet />
       </Box>
 
-      {/* 3. Footer (Opcional, por ahora un espacio simple) */}
+      {/* 3. Footer */}
       <Box
         component="footer"
         sx={{ py: 3, textAlign: "center", bgcolor: "#f5f5f5", mt: "auto" }}
