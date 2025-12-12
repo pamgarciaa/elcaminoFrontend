@@ -46,9 +46,6 @@ const CartDrawerContent = ({
   return (
     <Box
       sx={{
-        // CORRECCIÓN DE RESPONSIVIDAD:
-        // En móviles (xs) ocupa el 100% del ancho de la pantalla.
-        // En tablets/PC (sm en adelante) se fija en 360px.
         width: { xs: "100vw", sm: 360 },
         maxWidth: { xs: "100%", sm: 360 },
       }}

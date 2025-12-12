@@ -4,14 +4,13 @@ import {
   useUpdateCartMutation,
   useRemoveItemMutation,
 } from "../hooks/useCartMutations";
-import type { CartItem } from "../types/cartTypes"; // <--- Importar el tipo correcto
+import type { CartItem } from "../types/cartTypes";
 
 export const useCartService = () => {
   const { data: cart, isLoading, isError } = useCartQuery();
   const { mutate: updateCart, isPending: isUpdating } = useUpdateCartMutation();
   const { mutate: removeItem, isPending: isDeleting } = useRemoveItemMutation();
 
-  // Uso de CartItem en lugar de any
   const validItems = useMemo(() => {
     if (!cart?.items) return [];
     return cart.items.filter((item: CartItem) => item.product != null);
