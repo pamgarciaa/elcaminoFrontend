@@ -19,6 +19,7 @@ import {
   IMAGE_URL,
 } from "../../../../config/constants";
 import type { CartItem } from "../types/cartTypes";
+import { formatCurrency } from "../../../../utils/imageUtils"; // <-- Importar formatCurrency
 
 interface CartDrawerContentProps {
   isLoading: boolean;
@@ -152,7 +153,7 @@ const CartDrawerContent = ({
                   variant="body2"
                   sx={{ color: PRIMARY_ACCENT, mb: 1, fontWeight: 500 }}
                 >
-                  ${item.product.price.toFixed(2)}
+                  {formatCurrency(item.product.price)} {/* <-- CAMBIO $ a € */}
                 </Typography>
 
                 <Box
@@ -221,7 +222,7 @@ const CartDrawerContent = ({
               variant="h6"
               sx={{ color: LOGO_COLOR, fontWeight: "bold" }}
             >
-              ${subtotal.toFixed(2)}
+              {formatCurrency(subtotal)} {/* <-- CAMBIO $ a € */}
             </Typography>
           </Box>
 

@@ -3,10 +3,13 @@ import client from "../../../../api/axios.client";
 import { useSnackbar } from "notistack";
 import { API_ROUTES } from "../../../../config/constants";
 import { AxiosError } from "axios";
+import { checkoutService } from "../services/cartService";
 
 const CART_QUERY_KEY = ["cart"];
+const ORDERS_QUERY_KEY = ["myOrders"];
 
 type UpdateCartData = { productId: string; quantity: number };
+type CheckoutData = { shippingAddress: string };
 
 interface ErrorResponse {
   message: string;
@@ -65,6 +68,32 @@ export const useRemoveItemMutation = () => {
     onError: (error: AxiosError<ErrorResponse>) => {
       const errorMessage =
         error.response?.data?.message || "Error al eliminar el producto.";
+      enqueueSnackbar(errorMessage, { variant: "error" });
+    },
+  });
+};
+
+// NUEVO HOOK
+export const useCheckoutMutation = () => {
+  const queryClient = useQueryClient();
+  const { enqueueSnackbar } = useSnackbar();
+
+  return useMutation({
+    mutationFn: (data: CheckoutData) => checkoutService(data.shippingAddress),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ORDERS_QUERY_KEY });
+
+      enqueueSnackbar("¡Compra realizada con éxito! Revisa tu email.", {
+        variant: "success",
+      });
+    },
+
+    onError: (error: AxiosError<ErrorResponse>) => {
+      const errorMessage =
+        error.response?.data?.message ||
+        "Error al procesar el pago. Inténtalo de nuevo.";
       enqueueSnackbar(errorMessage, { variant: "error" });
     },
   });

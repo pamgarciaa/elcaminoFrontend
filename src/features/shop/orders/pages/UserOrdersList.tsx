@@ -13,6 +13,7 @@ import { useMyOrdersQuery } from "../hooks/useOrdersQuery";
 import Loader from "../../../../components/common/Loader";
 import { LOGO_COLOR } from "../../../../config/constants";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
+import { formatCurrency } from "../../../../utils/imageUtils"; // <-- Importar formatCurrency
 
 type ChipColor =
   | "default"
@@ -77,7 +78,7 @@ const UserOrdersList = () => {
                   variant="h6"
                   sx={{ color: LOGO_COLOR, fontWeight: "bold" }}
                 >
-                  ${order.totalAmount.toFixed(2)}
+                  {formatCurrency(order.totalAmount)} {/* <-- CAMBIO $ a € */}
                 </Typography>
               }
             >

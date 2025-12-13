@@ -3,13 +3,36 @@ import { useCartQuery } from "../hooks/useCartQuery";
 import {
   useUpdateCartMutation,
   useRemoveItemMutation,
+  useCheckoutMutation, // <-- Importado
 } from "../hooks/useCartMutations";
 import type { CartItem } from "../types/cartTypes";
+import axiosClient from "../../../../api/axios.client"; // <-- Importar cliente axios
+
+// Nuevo Servicio: Llamada a la API para checkout
+interface CheckoutResponse {
+  status: "success";
+  data: { order: any };
+}
+export const checkoutService = async (
+  shippingAddress: string
+): Promise<CheckoutResponse> => {
+  const response = await axiosClient.post("/cart/checkout", {
+    shippingAddress,
+  });
+  return response.data;
+};
 
 export const useCartService = () => {
   const { data: cart, isLoading, isError } = useCartQuery();
   const { mutate: updateCart, isPending: isUpdating } = useUpdateCartMutation();
   const { mutate: removeItem, isPending: isDeleting } = useRemoveItemMutation();
+  // <-- Mutación de Checkout
+  const {
+    mutateAsync: checkoutMutate,
+    isPending: isCheckingOut,
+    isError: isCheckoutError,
+    reset: resetCheckoutError,
+  } = useCheckoutMutation();
 
   const validItems = useMemo(() => {
     if (!cart?.items) return [];
@@ -48,22 +71,24 @@ export const useCartService = () => {
     }
   };
 
-  const handleCheckout = () => {
-    alert("¡Funcionalidad de pago próximamente!");
-  };
+  // La lógica de checkout se traslada a CartPage.tsx para manejar el estado local
+  // La función handleCheckout anterior ha sido eliminada.
 
   return {
     cart,
     validItems,
     isLoading,
     isError,
-    isProcessing: isUpdating || isDeleting,
+    isProcessing: isUpdating || isDeleting || isCheckingOut, // <-- Nuevo estado de procesamiento
     subtotal,
     totalItems,
     isEmpty: !validItems || validItems.length === 0,
     incrementItem: handleIncrement,
     decrementItem: handleDecrement,
     removeItem: handleRemove,
-    checkout: handleCheckout,
+    checkoutMutate, // <-- Función de mutación expuesta
+    isCheckingOut, // <-- Estado de carga expuesto
+    isCheckoutError, // <-- Estado de error expuesto
+    resetCheckoutError, // <-- Función para resetear error
   };
 };

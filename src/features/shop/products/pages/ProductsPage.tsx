@@ -20,7 +20,7 @@ import { Link as RouterLink } from "react-router-dom";
 import Loader from "../../../../components/common/Loader";
 import { useAuth } from "../../../auth/context/AuthContext";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import { getImageUrl } from "../../../../utils/imageUtils";
+import { getImageUrl, formatCurrency } from "../../../../utils/imageUtils"; // <-- Importar formatCurrency
 
 const ProductsPage = () => {
   const { data: products, isLoading, isError, error } = useProductsQuery();
@@ -80,7 +80,6 @@ const ProductsPage = () => {
       ) : (
         <Grid container spacing={3}>
           {products.map((product) => (
-            /* CORRECCIÓN AQUÍ: Se eliminó 'item' y se usa 'size={{...}}' */
             <Grid key={product._id} size={{ xs: 12, sm: 6, md: 4 }}>
               <Card
                 sx={{
@@ -126,7 +125,7 @@ const ProductsPage = () => {
                       {product.name}
                     </Typography>
                     <Typography variant="h6" sx={{ color: PRIMARY_ACCENT }}>
-                      ${product.price.toFixed(2)}
+                      {formatCurrency(product.price)}
                     </Typography>
                   </Box>
                   <Typography

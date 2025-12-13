@@ -6,3 +6,12 @@ export const getImageUrl = (path: string | undefined | null): string => {
 
   return `${IMAGE_URL}/${path.replace(/\\/g, "/")}`;
 };
+
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};

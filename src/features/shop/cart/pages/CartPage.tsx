@@ -11,6 +11,7 @@ import {
   Card,
   CardContent,
   CardMedia,
+  TextField,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -18,6 +19,7 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ShoppingCartCheckoutIcon from "@mui/icons-material/ShoppingCartCheckout";
 import { Link as RouterLink } from "react-router-dom";
+import { useState } from "react";
 
 import {
   IMAGE_URL,
@@ -26,6 +28,9 @@ import {
 } from "../../../../config/constants";
 import Loader from "../../../../components/common/Loader";
 import { useCartService } from "../services/cartService";
+import { formatCurrency } from "../../../../utils/imageUtils";
+import { useCheckoutMutation } from "../hooks/useCartMutations";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 const CartPage = () => {
   const {
@@ -39,13 +44,70 @@ const CartPage = () => {
     incrementItem,
     decrementItem,
     removeItem,
-    checkout,
   } = useCartService();
+
+  const checkoutMutation = useCheckoutMutation();
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const isCurrentlyProcessing = isProcessing || checkoutMutation.isPending;
+
+  const handleCheckout = async () => {
+    if (!shippingAddress.trim()) {
+      checkoutMutation.reset();
+      checkoutMutation.mutate({ shippingAddress: "" });
+      return;
+    }
+
+    try {
+      await checkoutMutation.mutateAsync({ shippingAddress });
+      setShowSuccess(true);
+    } catch (error) {
+      console.error("Fallo al procesar la compra", error);
+    }
+  };
 
   if (isLoading) return <Loader message="Cargando tu carrito..." />;
   if (isError)
     return <Alert severity="error">Error al cargar el carrito.</Alert>;
 
+  if (showSuccess) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 8, textAlign: "center" }}>
+        <Paper elevation={3} sx={{ p: 6, borderRadius: 2 }}>
+          <CheckCircleOutlineIcon
+            sx={{ fontSize: 80, color: PRIMARY_ACCENT, mb: 3 }}
+          />
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ color: LOGO_COLOR, fontWeight: "bold" }}
+          >
+            ¡Gracias por tu compra!
+          </Typography>
+          <Typography color="text.secondary" paragraph>
+            Tu pedido ha sido procesado con éxito. Pronto recibirás un email con
+            la confirmación y los detalles del pedido.
+          </Typography>
+          <Button
+            component={RouterLink}
+            to="/orders"
+            variant="contained"
+            size="large"
+            sx={{
+              mt: 2,
+              bgcolor: PRIMARY_ACCENT,
+              "&:hover": { bgcolor: LOGO_COLOR },
+            }}
+          >
+            Ver mis Pedidos
+          </Button>
+        </Paper>
+      </Container>
+    );
+  }
+
+  // BLOQUE DE RENDERIZADO
   if (isEmpty) {
     return (
       <Container maxWidth="md" sx={{ mt: 8, textAlign: "center" }}>
@@ -78,6 +140,7 @@ const CartPage = () => {
     );
   }
 
+  // BLOQUE DE RENDERIZADO: CARRITO CON PRODUCTOS
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography
@@ -127,7 +190,7 @@ const CartPage = () => {
                     fontWeight="bold"
                     sx={{ mt: 0.5 }}
                   >
-                    ${item.product.price.toFixed(2)}
+                    {formatCurrency(item.product.price)}
                   </Typography>
                 </CardContent>
 
@@ -138,7 +201,7 @@ const CartPage = () => {
                     onClick={() =>
                       decrementItem(item.product._id, item.quantity)
                     }
-                    disabled={isProcessing}
+                    disabled={isCurrentlyProcessing}
                     color="primary"
                     size="small"
                     sx={{ border: "1px solid #ccc" }}
@@ -155,7 +218,7 @@ const CartPage = () => {
 
                   <IconButton
                     onClick={() => incrementItem(item.product._id)}
-                    disabled={isProcessing}
+                    disabled={isCurrentlyProcessing}
                     color="primary"
                     size="small"
                     sx={{
@@ -179,14 +242,14 @@ const CartPage = () => {
                   }}
                 >
                   <Typography variant="subtitle1" fontWeight="bold">
-                    ${(item.product.price * item.quantity).toFixed(2)}
+                    {formatCurrency(item.product.price * item.quantity)}
                   </Typography>
                   <IconButton
                     onClick={() => removeItem(item.product._id)}
                     color="error"
                     size="small"
                     sx={{ mt: 1 }}
-                    disabled={isProcessing}
+                    disabled={isCurrentlyProcessing}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -208,11 +271,30 @@ const CartPage = () => {
             </Typography>
             <Divider sx={{ my: 2 }} />
 
+            {/* Campo de dirección de envío */}
+            <TextField
+              label="Dirección de Envío Requerida"
+              value={shippingAddress}
+              onChange={(e) => setShippingAddress(e.target.value)}
+              fullWidth
+              margin="normal"
+              required
+              size="small"
+              error={checkoutMutation.isError && shippingAddress.trim() === ""}
+              helperText={
+                checkoutMutation.isError && shippingAddress.trim() === ""
+                  ? "La dirección de envío es obligatoria para el checkout."
+                  : ""
+              }
+            />
+
             <Box
               sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
             >
               <Typography>Artículos ({totalItems})</Typography>
-              <Typography fontWeight="bold">${subtotal.toFixed(2)}</Typography>
+              <Typography fontWeight="bold">
+                {formatCurrency(subtotal)}
+              </Typography>
             </Box>
 
             <Box
@@ -231,7 +313,7 @@ const CartPage = () => {
                 Total
               </Typography>
               <Typography variant="h5" fontWeight="bold" color={PRIMARY_ACCENT}>
-                ${subtotal.toFixed(2)}
+                {formatCurrency(subtotal)}
               </Typography>
             </Box>
 
@@ -240,8 +322,8 @@ const CartPage = () => {
               fullWidth
               size="large"
               startIcon={<ShoppingCartCheckoutIcon />}
-              onClick={checkout}
-              disabled={isProcessing}
+              onClick={handleCheckout}
+              disabled={isCurrentlyProcessing || isEmpty}
               sx={{
                 bgcolor: LOGO_COLOR,
                 py: 1.5,
@@ -249,7 +331,7 @@ const CartPage = () => {
                 "&:hover": { bgcolor: PRIMARY_ACCENT },
               }}
             >
-              Tramitar Pedido
+              {checkoutMutation.isPending ? "Tramitando..." : "Tramitar Pedido"}
             </Button>
 
             <Button
